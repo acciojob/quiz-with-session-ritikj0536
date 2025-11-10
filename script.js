@@ -1,4 +1,4 @@
-// ✅ Do not remove or rename this questions array — Cypress reads it globally
+// ✅ Global questions array (Cypress reads it)
 const questions = [
   {
     question: "What is the capital of France?",
@@ -58,15 +58,21 @@ function renderQuestions() {
       input.name = `question-${index}`;
       input.value = choice;
 
-      // Restore checked answers
+      // Restore checked answers from sessionStorage
       if (userAnswers[index] === choice) {
         input.checked = true;
+        input.setAttribute("checked", "true"); // ✅ Important for Cypress
       }
 
       // Save progress when changed
-      input.addEventListener("change", () => {
+      input.addEventListener("change", (e) => {
         userAnswers[index] = choice;
         sessionStorage.setItem("progress", JSON.stringify(userAnswers));
+
+        // ✅ Update checked attributes for all radios in this question
+        const radios = document.getElementsByName(`question-${index}`);
+        radios.forEach((r) => r.removeAttribute("checked"));
+        e.target.setAttribute("checked", "true");
       });
 
       label.appendChild(input);
@@ -84,7 +90,6 @@ function renderQuestions() {
 // ----------------------
 function calculateScore() {
   let score = 0;
-
   questions.forEach((q, index) => {
     if (userAnswers[index] === q.answer) {
       score++;
@@ -104,7 +109,7 @@ submitButton.addEventListener("click", calculateScore);
 // On page load
 // ----------------------
 window.addEventListener("load", () => {
-  // Show previous score if it exists
+  // Restore score if exists
   const savedScore = localStorage.getItem("score");
   if (savedScore !== null) {
     scoreElement.textContent = `Your score is ${savedScore} out of ${questions.length}.`;
